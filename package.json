@@ -1,0 +1,17 @@
+{
+  "name": "book-reader",
+  "version": "1.0.0",
+  "description": "Single word reader for PDF focus reading",
+  "main": "server.js",
+  "author": "Ezequiel Streitenberger <ezequiel@estreiten.com>",
+  "license" : "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/estreiten/book-reader.git"
+  },
+  "homepage": "https://github.com/estreiten/book-reader",
+  "dependencies": {
+    "express": "^4.18.1",
+    "pdf-to-json": "git+https://github.com/estreiten/pdf-to-json.git"
+  }
+}

@@ -1,0 +1,220 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Book Reader</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+        font-size: 32px;
+        font-family: monospace;
+      }
+      .book {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+      }
+      .actions {
+        display: flex;
+        margin: 32px;
+      }
+      .status {
+        font-size: 20px;
+      }
+
+      .intro {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+      .form {
+        display: flex;
+        align-items: center;
+        margin: 32px
+      }
+      .btn {
+        background-color: rgb(50,100,80);
+        color: rgb(200,250,230);
+        margin: 0 16px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        box-shadow: 2px 4px 4px rgb(0 0 0 / 50%);
+        cursor: pointer;
+        text-transform: uppercase;
+        font-size: 22px;
+      }
+      input {
+        background-color: rgba(50,100,80,0.8);
+        color: rgb(200,250,230);
+        padding: 4px;
+        outline: none;
+        border: none;
+        border-radius: 2px;
+        box-shadow: 2px 4px 4px rgb(0 0 0 / 50%), 4px 4px 4px rgb(0 0 0 / 50%) inset;
+        font-size: 22px;
+        margin: 0 8px;
+        width: 80px;
+      }
+      canvas {
+        max-width: 100vw;
+        box-shadow: 2px 2px 4px rgb(0 0 0 / 50%), -2px -2px 4px rgb(0 0 0 / 50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="intro">
+      <div>Keep reading from page:</div>
+      <div class="form">
+        <input type="number" />
+        <div class="btn" onclick="read()">Go</div>
+      </div>
+    </div>
+    <script>
+      //source: https://codepen.io/allandiego/pen/RwVGbyj
+      function addAlphaChannelToUnit8ClampedArray(unit8Array, imageWidth, imageHeight) {
+        const newImageData = new Uint8ClampedArray(imageWidth * imageHeight * 4);
+
+        for (let j = 0, k = 0, jj = imageWidth * imageHeight * 4; j < jj;) {
+          newImageData[j++] = unit8Array[k++];
+          newImageData[j++] = unit8Array[k++];
+          newImageData[j++] = unit8Array[k++];
+          newImageData[j++] = 255;
+        }
+
+        return newImageData;
+      }
+
+      const renderImg = (img) => {
+        if (img.kind === 2) {
+          const imageUint8ArrayWithAlphaChanel = addAlphaChannelToUnit8ClampedArray(img.data, img.width, img.height)
+          const imgData = new ImageData(imageUint8ArrayWithAlphaChanel, img.width, img.height)
+          const canvas = document.createElement('canvas')
+          canvas.width = img.width
+          canvas.height = img.height
+          document.body.querySelector('.book').innerHTML = ''
+          document.body.querySelector('.book').appendChild(canvas)
+          const ctx = canvas.getContext('2d')
+          ctx.putImageData(imgData, 0, 0)
+        }
+      }
+
+      const printPage = (page, pageIndex) => {
+        return new Promise(async (resolve, reject) => {
+          for (let index = 0; index < page.length; index++) {
+            const paragraph = page[index];
+            await printParagraph(paragraph, pageIndex)
+          }
+          resolve()
+        })
+      }
+
+      const printParagraph = (paragraph, pageIndex) => {
+        return new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            for (let index = 0; index < paragraph.length; index++) {
+              const line = paragraph[index];
+              await printLine(line, pageIndex)
+            }
+            resolve()
+          }, 2000)
+        })
+      }
+
+      const printLine = (line, pageIndex) => {
+        return new Promise(async (resolve, reject) => {
+          if (line.type === 'text') {
+            const words = line.value.split(' ')
+            document.body.style.fontSize = `${parseInt(line.height) + 4}pt`
+            for (let index = 0; index < words.length; index++) {
+              const word = words[index];
+              await printWord(word)
+            }
+            resolve()
+          } else {
+            await fetch(`/img?pageIndex=${pageIndex}&name=${line.value}`)
+              .then(res => res.json())
+              .then((img) => {
+                renderImg(img)
+                const btn = document.querySelector('.actions .btn')
+                btn.innerHTML = 'Continue'
+                btn.onclick = () => {
+                  btn.innerHTML = 'Pause'
+                  btn.onclick = pause
+                  resolve()
+                }
+              })
+          }
+        })
+      }
+      
+      const printWord = (word) => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            const book = document.body.querySelector('.book')
+            book.innerHTML = word
+            if (book.classList.contains('paused')) {
+              const btn = document.querySelector('.actions .btn')
+              btn.onclick = () => {
+                btn.innerHTML = 'Pause'
+                btn.onclick = pause
+                book.classList.remove('paused')
+                resolve()
+              }
+            } else {
+              setTimeout(resolve, word.endsWith('.') ? 1000 : 0)
+            }
+          }, 500)
+        })
+      }
+
+      const read = async () => {
+        const fromPage = document.body.querySelector('input').value
+        if (!isNaN(fromPage) && fromPage > 0 && fromPage < pageCount) {
+          document.body.innerHTML = `<div class="book"></div>
+            <div class="actions">
+              <div class="btn" onclick="pause()">Pause</div>
+            </div>
+            <div class="status"></div>`
+          for (let index = fromPage; index < pageCount; index++) {
+            const pageData = await fetch(`/page/${index}`).then(res => res.json())
+            document.body.querySelector('.status').innerHTML = `PAGE ${index} OF ${pageCount} (${Math.floor((index / pageCount) * 100)}%)`
+            status.lastPage = index
+            fetch('/status', {
+              method: 'POST',
+              headers: {
+              'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(status)
+            })
+            await printPage(pageData, index)
+          }
+        }
+      }
+
+      const pause = () => {
+        document.querySelector('.book').classList.add('paused')
+        document.querySelector('.actions .btn').innerHTML = 'Continue'
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!!pageCount) {
+          document.body.querySelector('.intro').innerHTML = 
+            `<div>${pageCount} total pages.</div>
+            ${document.body.querySelector('.intro').innerHTML}`
+          document.body.querySelector('input').value = status.lastPage
+        }
+      })
+    </script>
+  </body>
+</html>
