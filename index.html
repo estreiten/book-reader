@@ -14,6 +14,22 @@
         font-size: 32px;
         font-family: monospace;
       }
+      .controls {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+        margin: 8px
+      }
+      .controls .btn {
+        border-radius: 90px;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+      }
       .book {
         flex: 1;
         display: flex;
@@ -70,16 +86,29 @@
         max-width: 100vw;
         box-shadow: 2px 2px 4px rgb(0 0 0 / 50%), -2px -2px 4px rgb(0 0 0 / 50%);
       }
+
+      body.dark {
+        background-color: black;
+        color: white;
+      }
+      body.dark main canvas {
+        opacity: 0.8;
+      }
     </style>
   </head>
   <body>
-    <div class="intro">
-      <div>Keep reading from page:</div>
-      <div class="form">
-        <input type="number" />
-        <div class="btn" onclick="read()">Go</div>
-      </div>
+    <div class="controls">
+      <div class="btn" onclick="switchLights(event)">😎</div>
     </div>
+    <main>
+      <div class="intro">
+        <div>Keep reading from page:</div>
+        <div class="form">
+          <input type="number" />
+          <div class="btn" onclick="read()">Go</div>
+        </div>
+      </div>
+    </main>
     <script>
       //source: https://codepen.io/allandiego/pen/RwVGbyj
       function addAlphaChannelToUnit8ClampedArray(unit8Array, imageWidth, imageHeight) {
@@ -181,7 +210,7 @@
       const read = async () => {
         const fromPage = document.body.querySelector('input').value
         if (!isNaN(fromPage) && fromPage > 0 && fromPage < pageCount) {
-          document.body.innerHTML = `<div class="book"></div>
+          document.body.querySelector('main').innerHTML = `<div class="book"></div>
             <div class="actions">
               <div class="btn" onclick="pause()">Pause</div>
             </div>
@@ -205,6 +234,16 @@
       const pause = () => {
         document.querySelector('.book').classList.add('paused')
         document.querySelector('.actions .btn').innerHTML = 'Continue'
+      }
+
+      const switchLights = (ev) => {
+        if (document.body.classList.contains('dark')) {
+          document.body.classList.remove('dark')
+          ev.target.innerHTML = '😎'
+        } else {
+          document.body.classList.add('dark')
+          ev.target.innerHTML = '💡'
+        }
       }
 
       document.addEventListener('DOMContentLoaded', () => {
