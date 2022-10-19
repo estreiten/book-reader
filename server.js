@@ -31,6 +31,7 @@ app.get('/page/:page', async (req, res) => {
 
 app.post('/status', async (req, res) => {
   try {
+    req.body.mode = 'reader'
     fs.writeFileSync('status.json', JSON.stringify(req.body, null, 2))
     res.sendStatus(200)
   } catch (err) {
