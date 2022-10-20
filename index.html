@@ -7,19 +7,32 @@
     <script src="global.js"></script>
     <script src="util.js"></script>
     <script src="reader.js"></script>
-    <script src="script.js"></script>
+    <script src="main.js"></script>
+    <script src="actions.js"></script>
   </head>
   <body>
     <div class="controls">
       <div class="btn" onclick="modeParagraph()">📖</div>
+      <div class="btn" onclick="location.href = '/highlights'">⭐</div>
       <div class="btn" onclick="switchLights(event)">😎</div>
     </div>
     <main>
       <div class="book"></div>
       <div class="actions">
-        <div id="previous" class="btn hidden" onclick="prevParagraph()">◀</div>
-        <div id="read" class="btn" onclick="pause()">Pause</div>
-        <div id="next" class="btn hidden" onclick="nextParagraph()">▶</div>
+        <div id="highlightActions" class="action-group">
+          <div id="note" contenteditable="true" class="hidden"></div>
+          <div id="clear" class="btn" onclick="clearHighlight()">✖</div>
+          <div id="save" class="btn" onclick="saveHighlight()">💾</div>
+          <div id="toggleNote" class="btn hidden" onclick="toggleNote()">✍</div>
+          <div id="delete" class="btn hidden">❌</div>
+        </div>
+        <div class="action-group">
+          <div id="backward" class="btn hidden" onclick="goBack()">◀◀</div>
+          <div id="previous" class="btn hidden" onclick="prevParagraph()">◀</div>
+          <div id="read" class="btn" onclick="pause()">Pause</div>
+          <div id="next" class="btn hidden" onclick="nextParagraph()">▶</div>
+          <div id="forward" class="btn hidden" onclick="goBack()">▶▶</div>
+        </div>
       </div>
       <div class="status"></div>
     </main>

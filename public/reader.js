@@ -64,16 +64,16 @@ const printLine = (line, pageIndex) => {
 const printWord = (word) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (status.mode === 'paragraph') {
-        reject('paragraph')
+      if (status.mode === 'paragraph' || status.mode === 'highlight') {
+        reject(status.mode)
       } else {
         const book = document.body.querySelector('.book')
         book.innerHTML = word
         if (book.classList.contains('paused')) {
           const btn = document.getElementById('read')
           const interval = setInterval(() => {
-            if (status.mode === 'paragraph') {
-              reject('paragraph')
+            if (status.mode === 'paragraph' || status.mode === 'highlight') {
+              reject(status.mode)
             }
           }, 2000)
           btn.onclick = () => {

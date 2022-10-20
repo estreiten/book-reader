@@ -29,11 +29,85 @@ app.get('/page/:page', async (req, res) => {
   }
 })
 
-app.post('/status', async (req, res) => {
+app.post('/status', (req, res) => {
   try {
-    req.body.mode = 'reader'
+    if (!req.body.mode) {
+      req.body.mode = 'reader'
+    }
     fs.writeFileSync('status.json', JSON.stringify(req.body, null, 2))
     res.sendStatus(200)
+  } catch (err) {
+    console.error(err)
+    res.sendStatus(500)
+  }
+})
+
+app.post('/highlight', (req, res) => {
+  try {
+    let highlights = JSON.parse(fs.readFileSync('highlights.json', 'utf8'))
+    const newHighlight = {
+      id: highlights.length,
+      ...req.body
+    }
+    // remove highlights contained in the new one
+    highlights = highlights.filter(highlight => 
+      highlight.from.line < newHighlight.from.line ||
+      (highlight.from.line === newHighlight.from.line && highlight.from.word < newHighlight.from.word) ||
+      highlight.to.line > newHighlight.to.line ||
+      (highlight.to.line === newHighlight.to.line && highlight.to.word > newHighlight.to.word))
+    highlights.push(newHighlight)
+    fs.writeFileSync('highlights.json', JSON.stringify(highlights, null, 2))
+    res.send(newHighlight)
+  } catch (err) {
+    console.error(err)
+    res.sendStatus(500)
+  }
+})
+
+app.get('/highlight', (req, res) => {
+  try {
+    const highlights = JSON.parse(fs.readFileSync('highlights.json', 'utf8'))
+    res.send(highlights)
+  } catch (err) {
+    console.error(err)
+    res.sendStatus(500)
+  }
+})
+
+app.delete('/highlight', (req, res) => {
+  try {
+    let highlights = JSON.parse(fs.readFileSync('highlights.json', 'utf8'))
+    const index = highlights.findIndex(highlight => highlight.id === parseInt(req.body.id))
+    if (index > -1) {
+      highlights.splice(index, 1)
+      fs.writeFileSync('highlights.json', JSON.stringify(highlights, null, 2))
+      res.sendStatus(200)
+    } else {
+      res.sendStatus(404)
+    }
+  } catch (err) {
+    console.error(err)
+    res.sendStatus(500)
+  }
+})
+
+app.get('/highlights', (req, res) => {
+  try {
+    let html = fs.readFileSync('highlights.html', 'utf8')
+    const highlights = JSON.parse(fs.readFileSync('highlights.json', 'utf8'))
+    let mainHtml = ''
+    for (let index = 0; index < highlights.length; index++) {
+      const highlight = highlights[index]
+      mainHtml += `<div class="highlight" onclick="goTo(${highlight.page},${highlight.paragraph})">
+        <div class="highlight-text">${highlight.text}</div>`
+      if (!!highlight.note) {
+        mainHtml += `<div class="highlight-note">${highlight.note}</div>`
+      }
+        mainHtml += `<div class="highlight-page">page ${highlight.page}</div>
+      </div>`
+    }
+    html = html.replace('<main>', '<main>' + mainHtml)
+    res.status(200).send(html)
   } catch (err) {
     console.error(err)
     res.sendStatus(500)
